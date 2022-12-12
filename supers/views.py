@@ -5,13 +5,38 @@ from rest_framework import status
 from .serializers import SuperSerializer
 from .models import Super
 
+
+@api_view(['GET'])
+def heroes_and_villains(request):
+    if request.method ==  'GET':
+    
+        custom_response_dictionary = {}
+
+        heroes = Super.objects.filter(super_type__type='hero')
+
+        hero_serializer = SuperSerializer(heroes, many=True)
+
+        villains = Super.objects.filter(super_type__type='villain')
+
+        villains_serializer = SuperSerializer(villains, many=True)
+
+        custom_response_dictionary = {
+            "heroes": hero_serializer.data,
+            "villains": villains_serializer.data
+        }
+    return Response(custom_response_dictionary)
+
+
 @api_view(['GET', 'POST'])
 def supers_list(request):
-
     if request.method == 'GET':
-        supers = Super.objects.all()
-        serializer = SuperSerializer(supers, many=True)
-        return Response(serializer.data)
+       type_param = request.query_params.get('type')
+       queryset = Super.objects.all()
+
+       if type_param:
+          queryset = queryset.filter(super_type__type=type_param)
+          serializer = SuperSerializer(queryset, many=True)
+          return Response(serializer.data)
 
     elif request.method == 'POST':
         serializer = SuperSerializer(data=request.data)
@@ -34,6 +59,8 @@ def supers_detail(request, pk):
     elif request.method == 'DELETE':
         supers.delete()
         return Response(status=status.HTTP_204_NO_CONTENT)
+
+
 
 
 
